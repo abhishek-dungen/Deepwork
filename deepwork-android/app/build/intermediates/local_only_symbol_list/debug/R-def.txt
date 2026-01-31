@@ -1,0 +1,31 @@
+R_DEF: Internal format may change without notice
+local
+array meridiem
+color bg
+color card
+color ink
+color muted
+color white
+drawable card_bg
+drawable dash_bg
+drawable pill_bg
+id addBtn
+id calcBtn
+id clearBtn
+id clearTodayBtn
+id endHour
+id endMeridiem
+id endMin
+id historyList
+id result
+id startHour
+id startMeridiem
+id startMin
+id title
+id todayLabel
+id todayList
+id todayTotal
+layout activity_main
+mipmap ic_launcher
+string app_name
+style Theme.Deepwork

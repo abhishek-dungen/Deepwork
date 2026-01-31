@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Deepwork</string>
+    <string-array name="meridiem">
+        <item>AM</item>
+        <item>PM</item>
+    </string-array>
+</resources>

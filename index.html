@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deep Work Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Fraunces:wght@600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f7f3ee;
+        --card: #fff7e9;
+        --ink: #1d1a16;
+        --accent: #ff6b3d;
+        --accent-2: #3d7dff;
+        --muted: #6b6259;
+        --ring: rgba(29, 26, 22, 0.25);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background: radial-gradient(1200px 600px at 10% 10%, #ffe7d6 0%, transparent 60%),
+                    radial-gradient(900px 500px at 90% 20%, #dbe8ff 0%, transparent 55%),
+                    var(--bg);
+        font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      .app {
+        width: min(880px, 100%);
+        background: var(--card);
+        border: 2px solid #1d1a16;
+        border-radius: 18px;
+        box-shadow: 8px 10px 0 #1d1a16;
+        padding: 28px;
+      }
+      h1 {
+        margin: 0 0 8px 0;
+        font-family: "Fraunces", serif;
+        font-size: clamp(24px, 4vw, 34px);
+        letter-spacing: 0.2px;
+      }
+      p {
+        margin: 0 0 16px 0;
+        color: var(--muted);
+      }
+      .row {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .card {
+        background: #fff;
+        border: 2px solid #1d1a16;
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--muted);
+        margin-bottom: 10px;
+        display: inline-block;
+      }
+      .time-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+      }
+      input, select, button {
+        font: inherit;
+        padding: 10px 12px;
+        border: 2px solid #1d1a16;
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+      }
+      input:focus, select:focus, button:focus {
+        outline: 3px solid var(--ring);
+        outline-offset: 2px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      button {
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        border-color: #1d1a16;
+        font-weight: 600;
+      }
+      .ghost {
+        background: #fff;
+        color: var(--ink);
+      }
+      .hint {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .totals {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+      .nav-bar {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 12px 0 6px;
+        font-weight: 700;
+      }
+      .nav-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ink);
+        text-decoration: none;
+        background: none;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+      .nav-item .caret {
+        font-size: 12px;
+        transform: translateY(1px);
+      }
+      .section {
+        margin-top: 18px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .table {
+        border: 2px solid #1d1a16;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .table-row {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr 0.6fr;
+        gap: 10px;
+        padding: 12px 14px;
+        border-top: 1px solid #1d1a16;
+      }
+      .table-row:first-child {
+        border-top: none;
+        background: #f3efe8;
+        font-weight: 700;
+      }
+      .table-row[data-date] {
+        cursor: pointer;
+      }
+      .table-row[data-date]:hover {
+        background: #f9f2e6;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 50;
+      }
+      .modal {
+        width: min(560px, 92vw);
+        background: #fff;
+        border: 2px solid #1d1a16;
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      }
+      .modal-header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .modal-sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .close-btn {
+        background: #fff;
+        color: var(--ink);
+        border: 2px solid #1d1a16;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .modal-list {
+        margin-top: 14px;
+        border: 2px solid #1d1a16;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .modal-error {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #8a2f1a;
+      }
+      .modal-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .settings-grid {
+        display: grid;
+        gap: 12px;
+      }
+      .settings-field {
+        display: grid;
+        gap: 6px;
+      }
+      .settings-field label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .settings-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .settings-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .edit-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 12px;
+      }
+      .edit-grid .card {
+        padding: 12px;
+      }
+      .modal-row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 0.6fr 0.6fr;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid #e6dbcf;
+        font-size: 14px;
+      }
+      .modal-row:last-child {
+        border-bottom: none;
+      }
+      .modal-head {
+        background: #f9efe2;
+        font-weight: 600;
+      }
+      .pill {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #fff;
+        border: 2px solid #1d1a16;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .list {
+        margin-top: 12px;
+        border: 2px solid #1d1a16;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .list-row {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 0.8fr 0.6fr 0.6fr;
+        gap: 6px;
+        padding: 10px 12px;
+        border-bottom: 1px solid #e6dbcf;
+        font-size: 14px;
+      }
+      .list-row:last-child { border-bottom: none; }
+      .list-head {
+        background: #f9efe2;
+        font-weight: 600;
+      }
+      .muted { color: var(--muted); }
+      @media (max-width: 720px) {
+        .row { grid-template-columns: 1fr; }
+        .time-inputs { grid-template-columns: 1fr 1fr; }
+        .time-inputs select:last-child { grid-column: 1 / -1; }
+        .edit-grid { grid-template-columns: 1fr; }
+        .list-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <h1>Deep Work Calculator</h1>
+
+      <nav class="nav-bar" aria-label="Primary">
+        <button id="logsToggle" class="nav-item" type="button">Daily Logs <span class="caret">▾</span></button>
+        <button id="settingsToggle" class="nav-item" type="button">Settings <span class="caret">▾</span></button>
+      </nav>
+
+      <div id="mainContent">
+        <div class="row section" id="sessions">
+          <div class="card">
+            <span class="label">Start Time</span>
+            <div class="time-inputs">
+              <input id="startHour" type="number" min="1" max="12" placeholder="Hour" />
+              <input id="startMin" type="number" min="0" max="59" placeholder="Minute" />
+              <select id="startMeridiem">
+                <option>AM</option>
+                <option>PM</option>
+              </select>
+            </div>
+          </div>
+          <div class="card">
+            <span class="label">End Time</span>
+            <div class="time-inputs">
+              <input id="endHour" type="number" min="1" max="12" placeholder="Hour" />
+              <input id="endMin" type="number" min="0" max="59" placeholder="Minute" />
+              <select id="endMeridiem">
+                <option>AM</option>
+                <option>PM</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="addBtn">Add Session</button>
+          <button id="clearBtn" class="ghost">Clear Inputs</button>
+        </div>
+
+        <div class="totals section" id="totals">
+          <div class="pill" id="todayLabel">Today: —</div>
+          <div class="pill" id="todayTotal">Total today: 0 hours 0 minutes</div>
+        </div>
+
+        <div class="card section">
+          <span class="label">Today Sessions</span>
+          <div id="todayList" class="list"></div>
+        </div>
+      </div>
+
+      <div class="section hidden" id="logs">
+        <div class="actions">
+          <button id="backToEntryBtn" class="ghost" type="button">Back to Entries</button>
+        </div>
+        <div class="card">
+          <span class="label">Daily Totals</span>
+          <div id="historyList" class="table"></div>
+        </div>
+      </div>
+
+      <div class="section hidden" id="settings">
+        <div class="actions">
+          <button id="backFromSettingsBtn" class="ghost" type="button">Back to Entries</button>
+        </div>
+        <div class="card">
+          <span class="label">Supabase Settings</span>
+          <div class="settings-grid">
+            <div class="settings-field">
+              <label for="supabaseUrl">Project URL</label>
+              <input id="supabaseUrl" type="url" placeholder="https://xxxx.supabase.co" />
+            </div>
+            <div class="settings-field">
+              <label for="supabaseAnonKey">Anon Key</label>
+              <input id="supabaseAnonKey" type="password" placeholder="Your anon key" />
+            </div>
+            <div class="settings-field">
+              <label for="supabaseTable">Sessions Table</label>
+              <input id="supabaseTable" type="text" placeholder="sessions" />
+            </div>
+            <div class="settings-field">
+              <label for="supabaseDailyTable">Daily Totals Table</label>
+              <input id="supabaseDailyTable" type="text" placeholder="daily_totals" />
+            </div>
+            <div id="settingsStatus" class="settings-note"></div>
+            <div class="settings-actions">
+              <button id="saveSettingsBtn" type="button">Save Settings</button>
+              <button id="clearSettingsBtn" class="ghost" type="button">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="detailsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+        <div class="modal">
+          <div class="modal-header">
+            <div>
+              <div id="detailsTitle" class="modal-title">Daily Breakdown</div>
+              <div id="detailsSub" class="modal-sub"></div>
+            </div>
+            <button id="closeModalBtn" class="close-btn" type="button">Close</button>
+          </div>
+          <div id="detailsList" class="modal-list"></div>
+        </div>
+      </div>
+
+      <div id="editModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+        <div class="modal">
+          <div class="modal-header">
+            <div>
+              <div id="editTitle" class="modal-title">Edit Session</div>
+              <div id="editSub" class="modal-sub"></div>
+            </div>
+            <button id="closeEditBtn" class="close-btn" type="button">Close</button>
+          </div>
+          <div class="edit-grid">
+            <div class="card">
+              <span class="label">Start Time</span>
+              <div class="time-inputs">
+                <input id="editStartHour" type="number" min="1" max="12" placeholder="Hour" />
+                <input id="editStartMin" type="number" min="0" max="59" placeholder="Minute" />
+                <select id="editStartMeridiem">
+                  <option>AM</option>
+                  <option>PM</option>
+                </select>
+              </div>
+            </div>
+            <div class="card">
+              <span class="label">End Time</span>
+              <div class="time-inputs">
+                <input id="editEndHour" type="number" min="1" max="12" placeholder="Hour" />
+                <input id="editEndMin" type="number" min="0" max="59" placeholder="Minute" />
+                <select id="editEndMeridiem">
+                  <option>AM</option>
+                  <option>PM</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="editError" class="modal-error"></div>
+          <div class="modal-actions">
+            <button id="saveEditBtn" type="button">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const startHour = document.getElementById("startHour");
+      const startMin = document.getElementById("startMin");
+      const startMeridiem = document.getElementById("startMeridiem");
+      const endHour = document.getElementById("endHour");
+      const endMin = document.getElementById("endMin");
+      const endMeridiem = document.getElementById("endMeridiem");
+      const todayLabel = document.getElementById("todayLabel");
+      const todayTotal = document.getElementById("todayTotal");
+      const todayList = document.getElementById("todayList");
+      const historyList = document.getElementById("historyList");
+      const logsToggle = document.getElementById("logsToggle");
+      const settingsToggle = document.getElementById("settingsToggle");
+      const logsSection = document.getElementById("logs");
+      const mainContent = document.getElementById("mainContent");
+      const backToEntryBtn = document.getElementById("backToEntryBtn");
+      const settingsSection = document.getElementById("settings");
+      const backFromSettingsBtn = document.getElementById("backFromSettingsBtn");
+      const supabaseUrl = document.getElementById("supabaseUrl");
+      const supabaseAnonKey = document.getElementById("supabaseAnonKey");
+      const supabaseTable = document.getElementById("supabaseTable");
+      const supabaseDailyTable = document.getElementById("supabaseDailyTable");
+      const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+      const clearSettingsBtn = document.getElementById("clearSettingsBtn");
+      const settingsStatus = document.getElementById("settingsStatus");
+      const detailsModal = document.getElementById("detailsModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const detailsTitle = document.getElementById("detailsTitle");
+      const detailsSub = document.getElementById("detailsSub");
+      const detailsList = document.getElementById("detailsList");
+      const editModal = document.getElementById("editModal");
+      const closeEditBtn = document.getElementById("closeEditBtn");
+      const editTitle = document.getElementById("editTitle");
+      const editSub = document.getElementById("editSub");
+      const editStartHour = document.getElementById("editStartHour");
+      const editStartMin = document.getElementById("editStartMin");
+      const editStartMeridiem = document.getElementById("editStartMeridiem");
+      const editEndHour = document.getElementById("editEndHour");
+      const editEndMin = document.getElementById("editEndMin");
+      const editEndMeridiem = document.getElementById("editEndMeridiem");
+      const editError = document.getElementById("editError");
+      const saveEditBtn = document.getElementById("saveEditBtn");
+
+      const STORAGE_KEY = "deepWorkSessions";
+      const SETTINGS_KEY = "supabaseSettings";
+      let activeEditId = null;
+
+      function showSection(section) {
+        mainContent.classList.add("hidden");
+        logsSection.classList.add("hidden");
+        settingsSection.classList.add("hidden");
+        if (section === "main") mainContent.classList.remove("hidden");
+        if (section === "logs") logsSection.classList.remove("hidden");
+        if (section === "settings") settingsSection.classList.remove("hidden");
+      }
+
+      function getTodayKey() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const dd = String(now.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
+      function formatDateLabel(dateKey) {
+        const [y, m, d] = dateKey.split("-").map(Number);
+        const dt = new Date(y, m - 1, d);
+        return dt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+      }
+
+      function toMinutes(h, m, mer) {
+        let hour = Number(h);
+        let min = Number(m);
+        if (!Number.isInteger(hour) || !Number.isInteger(min)) return null;
+        if (hour < 1 || hour > 12) return null;
+        if (min < 0 || min > 59) return null;
+        if (mer === "AM") {
+          if (hour === 12) hour = 0;
+        } else {
+          if (hour !== 12) hour += 12;
+        }
+        return hour * 60 + min;
+      }
+
+      function formatDuration(totalMinutes) {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${hours} hour${hours !== 1 ? "s" : ""} ${minutes} minute${minutes !== 1 ? "s" : ""}`;
+      }
+
+      function makeId() {
+        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+        return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function normalizeSessions(sessions) {
+        let changed = false;
+        const normalized = sessions.map((s) => {
+          if (!s.id) {
+            changed = true;
+            return { ...s, id: makeId() };
+          }
+          return s;
+        });
+        if (changed) saveSessions(normalized);
+        return normalized;
+      }
+
+      function loadSessions() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return normalizeSessions(Array.isArray(parsed) ? parsed : []);
+        } catch {
+          return [];
+        }
+      }
+
+      function activeSessions(sessions) {
+        return sessions.filter((s) => !s.deleted_at);
+      }
+
+      function saveSessions(sessions) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      }
+
+      function calculateDiff() {
+        return calculateDiffFromInputs(startHour.value, startMin.value, startMeridiem.value, endHour.value, endMin.value, endMeridiem.value);
+      }
+
+      function calculateDiffFromInputs(sh, sm, sMer, eh, em, eMer) {
+        const start = toMinutes(sh, sm, sMer);
+        const end = toMinutes(eh, em, eMer);
+        if (start === null || end === null) return null;
+        let diff = end - start;
+        if (diff < 0) diff += 24 * 60;
+        return diff;
+      }
+
+      function render() {
+        const sessions = activeSessions(loadSessions());
+        const todayKey = getTodayKey();
+
+        todayLabel.textContent = `Today: ${formatDateLabel(todayKey)}`;
+
+        const todaySessions = sessions.filter((s) => s.date === todayKey);
+        const todayMinutes = todaySessions.reduce((sum, s) => sum + s.minutes, 0);
+        todayTotal.textContent = `Total today: ${formatDuration(todayMinutes)}`;
+
+        if (todaySessions.length === 0) {
+          todayList.innerHTML = '<div class="list-row muted">No sessions added yet.</div>';
+        } else {
+          todayList.innerHTML = `
+            <div class="list-row list-head"><div>Session</div><div>Duration</div><div>Added</div><div>Edit</div><div>Delete</div></div>
+            ${todaySessions.map((s, idx) => `
+              <div class="list-row">
+                <div>${s.start} - ${s.end}</div>
+                <div>${formatDuration(s.minutes)}</div>
+                <div>#${idx + 1}</div>
+                <div><button class="ghost edit-btn" type="button" data-id="${s.id}">Edit</button></div>
+                <div><button class="ghost delete-btn" type="button" data-id="${s.id}">Delete</button></div>
+              </div>
+            `).join("")}
+          `;
+        }
+
+        const totalsByDate = sessions.reduce((map, s) => {
+          map[s.date] = (map[s.date] || 0) + s.minutes;
+          return map;
+        }, {});
+
+        const sortedDates = Object.keys(totalsByDate).sort((a, b) => (a > b ? -1 : 1));
+        if (sortedDates.length === 0) {
+          historyList.innerHTML = '<div class="table-row muted">No history yet.</div>';
+        } else {
+          historyList.innerHTML = `
+            <div class="table-row"><div>Date</div><div>Total Hours</div><div>Sessions Count</div><div>Delete</div></div>
+            ${sortedDates.map((dateKey) => {
+              const count = sessions.filter((s) => s.date === dateKey).length;
+              return `
+                <div class="table-row" data-date="${dateKey}">
+                  <div>${formatDateLabel(dateKey)}</div>
+                  <div>${formatDuration(totalsByDate[dateKey])}</div>
+                  <div>${count}</div>
+                  <div><button class="ghost delete-date-btn" type="button" data-date="${dateKey}">Delete</button></div>
+                </div>
+              `;
+            }).join("")}
+          `;
+        }
+      }
+
+      document.getElementById("addBtn").addEventListener("click", () => {
+        const diff = calculateDiff();
+        if (diff === null) {
+          return;
+        }
+        const session = {
+          date: getTodayKey(),
+          start: `${startHour.value}:${String(startMin.value).padStart(2, "0")} ${startMeridiem.value}`,
+          end: `${endHour.value}:${String(endMin.value).padStart(2, "0")} ${endMeridiem.value}`,
+          minutes: diff,
+          addedAt: Date.now()
+        };
+        const sessions = loadSessions();
+        sessions.push(session);
+        saveSessions(sessions);
+        render();
+      });
+
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        startHour.value = "";
+        startMin.value = "";
+        startMeridiem.value = "AM";
+        endHour.value = "";
+        endMin.value = "";
+        endMeridiem.value = "AM";
+      });
+
+      logsToggle.addEventListener("click", () => {
+        const showingLogs = !logsSection.classList.contains("hidden");
+        showSection(showingLogs ? "main" : "logs");
+      });
+
+      backToEntryBtn.addEventListener("click", () => {
+        showSection("main");
+      });
+
+      settingsToggle.addEventListener("click", () => {
+        const showingSettings = !settingsSection.classList.contains("hidden");
+        showSection(showingSettings ? "main" : "settings");
+      });
+
+      backFromSettingsBtn.addEventListener("click", () => {
+        showSection("main");
+      });
+
+      function openDetails(dateKey) {
+        const sessions = activeSessions(loadSessions()).filter((s) => s.date === dateKey);
+        const total = sessions.reduce((sum, s) => sum + s.minutes, 0);
+        detailsTitle.textContent = formatDateLabel(dateKey);
+        detailsSub.textContent = `${formatDuration(total)} • ${sessions.length} session${sessions.length !== 1 ? "s" : ""}`;
+        if (sessions.length === 0) {
+          detailsList.innerHTML = '<div class="modal-row">No sessions for this date.</div>';
+        } else {
+          detailsList.innerHTML = `
+            <div class="modal-row modal-head"><div>Time Interval</div><div>Duration</div><div>Edit</div><div>Delete</div></div>
+            ${sessions.map((s) => `
+              <div class="modal-row" data-id="${s.id}">
+                <div>${s.start} – ${s.end}</div>
+                <div>${formatDuration(s.minutes)}</div>
+                <div><button class="ghost edit-session-btn" type="button" data-id="${s.id}">Edit</button></div>
+                <div><button class="ghost delete-session-btn" type="button" data-id="${s.id}">Delete</button></div>
+              </div>
+            `).join("")}
+          `;
+        }
+        detailsModal.classList.remove("hidden");
+      }
+
+      function parseTimeString(value) {
+        const match = String(value).match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/);
+        if (!match) return null;
+        return { hour: match[1], min: match[2], mer: match[3] };
+      }
+
+      function openEdit(sessionId) {
+        const sessions = activeSessions(loadSessions());
+        const session = sessions.find((s) => s.id === sessionId);
+        if (!session) return;
+        activeEditId = sessionId;
+        const start = parseTimeString(session.start);
+        const end = parseTimeString(session.end);
+        if (start) {
+          editStartHour.value = start.hour;
+          editStartMin.value = start.min;
+          editStartMeridiem.value = start.mer;
+        }
+        if (end) {
+          editEndHour.value = end.hour;
+          editEndMin.value = end.min;
+          editEndMeridiem.value = end.mer;
+        }
+        editTitle.textContent = `Edit Session`;
+        editSub.textContent = `${formatDateLabel(session.date)}`;
+        editError.textContent = "";
+        editModal.classList.remove("hidden");
+      }
+
+      historyList.addEventListener("click", (event) => {
+        const deleteBtn = event.target.closest(".delete-date-btn");
+        if (deleteBtn) {
+          const dateKey = deleteBtn.getAttribute("data-date");
+          if (!dateKey) return;
+          const sessions = loadSessions();
+          const updated = sessions.map((s) =>
+            s.date === dateKey && !s.deleted_at ? { ...s, deleted_at: new Date().toISOString() } : s
+          );
+          saveSessions(updated);
+          render();
+          return;
+        }
+        const row = event.target.closest(".table-row[data-date]");
+        if (!row) return;
+        openDetails(row.getAttribute("data-date"));
+      });
+
+      closeModalBtn.addEventListener("click", () => {
+        detailsModal.classList.add("hidden");
+      });
+
+      detailsModal.addEventListener("click", (event) => {
+        if (event.target === detailsModal) {
+          detailsModal.classList.add("hidden");
+        }
+      });
+
+      todayList.addEventListener("click", (event) => {
+        const editBtn = event.target.closest(".edit-btn");
+        if (editBtn) {
+          openEdit(editBtn.getAttribute("data-id"));
+          return;
+        }
+        const deleteBtn = event.target.closest(".delete-btn");
+        if (!deleteBtn) return;
+        const id = deleteBtn.getAttribute("data-id");
+        if (!id) return;
+        const sessions = loadSessions();
+        const idx = sessions.findIndex((s) => s.id === id);
+        if (idx === -1) return;
+        sessions[idx] = { ...sessions[idx], deleted_at: new Date().toISOString() };
+        saveSessions(sessions);
+        render();
+      });
+
+      detailsList.addEventListener("click", (event) => {
+        const editBtn = event.target.closest(".edit-session-btn");
+        if (editBtn) {
+          openEdit(editBtn.getAttribute("data-id"));
+          return;
+        }
+        const deleteBtn = event.target.closest(".delete-session-btn");
+        if (deleteBtn) {
+          const id = deleteBtn.getAttribute("data-id");
+          if (!id) return;
+          const sessions = loadSessions();
+          const idx = sessions.findIndex((s) => s.id === id);
+          if (idx === -1) return;
+          sessions[idx] = { ...sessions[idx], deleted_at: new Date().toISOString() };
+          saveSessions(sessions);
+          render();
+          detailsModal.classList.add("hidden");
+          return;
+        }
+        const row = event.target.closest(".modal-row[data-id]");
+        if (!row) return;
+        openEdit(row.getAttribute("data-id"));
+      });
+
+      closeEditBtn.addEventListener("click", () => {
+        editModal.classList.add("hidden");
+      });
+
+      editModal.addEventListener("click", (event) => {
+        if (event.target === editModal) {
+          editModal.classList.add("hidden");
+        }
+      });
+
+      saveEditBtn.addEventListener("click", () => {
+        if (!activeEditId) return;
+        const diff = calculateDiffFromInputs(
+          editStartHour.value,
+          editStartMin.value,
+          editStartMeridiem.value,
+          editEndHour.value,
+          editEndMin.value,
+          editEndMeridiem.value
+        );
+        if (diff === null) {
+          editError.textContent = "Please enter valid times.";
+          return;
+        }
+        const sessions = loadSessions();
+        const idx = sessions.findIndex((s) => s.id === activeEditId);
+        if (idx === -1) return;
+        const startStr = `${Number(editStartHour.value)}:${String(editStartMin.value).padStart(2, "0")} ${editStartMeridiem.value}`;
+        const endStr = `${Number(editEndHour.value)}:${String(editEndMin.value).padStart(2, "0")} ${editEndMeridiem.value}`;
+        sessions[idx] = { ...sessions[idx], start: startStr, end: endStr, minutes: diff };
+        saveSessions(sessions);
+        editModal.classList.add("hidden");
+        render();
+      });
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function populateSettings() {
+        const saved = loadSettings();
+        if (!saved) return;
+        supabaseUrl.value = saved.url || "";
+        supabaseAnonKey.value = saved.anonKey || "";
+        supabaseTable.value = saved.sessionsTable || "sessions";
+        supabaseDailyTable.value = saved.dailyTotalsTable || "daily_totals";
+        settingsStatus.textContent = "Settings loaded from this browser.";
+      }
+
+      saveSettingsBtn.addEventListener("click", () => {
+        const payload = {
+          url: supabaseUrl.value.trim(),
+          anonKey: supabaseAnonKey.value.trim(),
+          sessionsTable: supabaseTable.value.trim() || "sessions",
+          dailyTotalsTable: supabaseDailyTable.value.trim() || "daily_totals"
+        };
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
+        settingsStatus.textContent = "Settings saved.";
+      });
+
+      clearSettingsBtn.addEventListener("click", () => {
+        localStorage.removeItem(SETTINGS_KEY);
+        supabaseUrl.value = "";
+        supabaseAnonKey.value = "";
+        supabaseTable.value = "sessions";
+        supabaseDailyTable.value = "daily_totals";
+        settingsStatus.textContent = "Settings cleared.";
+      });
+
+      populateSettings();
+      render();
+    </script>
+  </body>
+</html>
