@@ -357,6 +357,11 @@
         </div>
 
         <div class="card section">
+          <span class="label">Session Date</span>
+          <input id="sessionDate" type="date" />
+        </div>
+
+        <div class="card section">
           <span class="label">Today Sessions</span>
           <div id="todayList" class="list"></div>
         </div>
@@ -468,6 +473,7 @@
       const todayLabel = document.getElementById("todayLabel");
       const todayTotal = document.getElementById("todayTotal");
       const todayList = document.getElementById("todayList");
+      const sessionDate = document.getElementById("sessionDate");
       const historyList = document.getElementById("historyList");
       const logsToggle = document.getElementById("logsToggle");
       const settingsToggle = document.getElementById("settingsToggle");
@@ -520,6 +526,10 @@
         const mm = String(now.getMonth() + 1).padStart(2, "0");
         const dd = String(now.getDate()).padStart(2, "0");
         return `${yyyy}-${mm}-${dd}`;
+      }
+
+      function getSelectedDateKey() {
+        return sessionDate.value || getTodayKey();
       }
 
       function formatDateLabel(dateKey) {
@@ -600,10 +610,11 @@
       function render() {
         const sessions = activeSessions(loadSessions());
         const todayKey = getTodayKey();
+        const selectedKey = getSelectedDateKey();
 
-        todayLabel.textContent = `Today: ${formatDateLabel(todayKey)}`;
+        todayLabel.textContent = `Today: ${formatDateLabel(selectedKey)}`;
 
-        const todaySessions = sessions.filter((s) => s.date === todayKey);
+        const todaySessions = sessions.filter((s) => s.date === selectedKey);
         const todayMinutes = todaySessions.reduce((sum, s) => sum + s.minutes, 0);
         todayTotal.textContent = `Total today: ${formatDuration(todayMinutes)}`;
 
@@ -656,7 +667,7 @@
           return;
         }
         const session = {
-          date: getTodayKey(),
+          date: getSelectedDateKey(),
           start: `${startHour.value}:${String(startMin.value).padStart(2, "0")} ${startMeridiem.value}`,
           end: `${endHour.value}:${String(endMin.value).padStart(2, "0")} ${endMeridiem.value}`,
           minutes: diff,
@@ -675,6 +686,10 @@
         endHour.value = "";
         endMin.value = "";
         endMeridiem.value = "AM";
+      });
+
+      sessionDate.addEventListener("change", () => {
+        render();
       });
 
       logsToggle.addEventListener("click", () => {
@@ -891,6 +906,7 @@
         settingsStatus.textContent = "Settings cleared.";
       });
 
+      sessionDate.value = getTodayKey();
       populateSettings();
       render();
     </script>
